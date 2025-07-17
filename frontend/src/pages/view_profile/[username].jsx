@@ -227,12 +227,17 @@ function ViewProfilePage({ userProfile }) {
 export default ViewProfilePage;
 
 export async function getServerSideProps(context) {
+  console.log(context.query.username);
   const request = await clientServer.get(
     "/user/get_profile_based_on_username",
     {
-      params: { username: context.query.username },
+      params: {
+        username: context.query.username,
+      },
     }
   );
 
-  return { props: { userProfile: request.data.profile } };
+  const response = await request.data;
+  console.log(response);
+  return { props: { userProfile: response.profile } };
 }
