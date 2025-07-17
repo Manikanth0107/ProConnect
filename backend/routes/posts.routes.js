@@ -9,24 +9,14 @@ import {
   getAllPosts,
   increment_likes,
 } from "../controllers/posts.contoller.js";
-import multer from "multer";
+import { upload } from "../middleware/upload.js";
 
 const router = Router();
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
 
 router.route("/").get(activeCheck);
 
 router.route("/post").post(upload.single("media"), createPost);
+
 router.route("/posts").get(getAllPosts);
 router.route("/delete_post").delete(deletePost);
 router.route("/comment").post(commentPost);

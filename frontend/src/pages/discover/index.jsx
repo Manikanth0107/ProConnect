@@ -22,40 +22,37 @@ function DiscoverPage() {
     <div>
       <UserLayout>
         <Dashboardlayout>
-          <h1>Discover</h1>
+          <h1 className={styles.pageTitle}>Discover Professionals</h1>
 
-          <div className={styles.allUserProfile}>
+          <div className={styles.userGrid}>
             {authState.all_profiles_fetched &&
-              authState.all_users.map((user) => {
-                return (
-                  <div
-                    onClick={() => {
-                      if (
-                        user.userId.username ===
-                        authState.user?.userId?.username
-                      ) {
-                        // If the clicked user is the logged-in user, redirect to their profile
-                        router.push("/profile");
-                      } else {
-                        // Otherwise, redirect to their profile view page
-                        router.push(`/view_profile/${user.userId.username}`);
-                      }
-                    }}
-                    key={user._id}
-                    className={styles.userCard}
-                  >
+              authState.all_users.map((user) => (
+                <div
+                  key={user._id}
+                  className={styles.userCard}
+                  onClick={() => {
+                    const isOwnProfile =
+                      user.userId.username === authState.user?.userId?.username;
+                    router.push(
+                      isOwnProfile
+                        ? "/profile"
+                        : `/view_profile/${user.userId.username}`
+                    );
+                  }}
+                >
+                  <div className={styles.avatarWrapper}>
                     <img
-                      className={styles.userCardImage}
-                      src={`${BASE_URL}/${user.userId.profilePicture}`}
-                      alt="Profile Picture"
+                      className={styles.avatar}
+                      src={user.userId.profilePicture}
+                      alt={`${user.userId.name} profile`}
                     />
-                    <div>
-                      <h1>{user.userId.name}</h1>
-                      <p>{user.userId.username}</p>
-                    </div>
                   </div>
-                );
-              })}
+                  <div className={styles.userInfo}>
+                    <h2>{user.userId.name}</h2>
+                    <p>@{user.userId.username}</p>
+                  </div>
+                </div>
+              ))}
           </div>
         </Dashboardlayout>
       </UserLayout>

@@ -83,6 +83,16 @@
   cursor: pointer;
 }
 
+.deleteButton {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin-top: 5px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
 .connectedButton {
   padding-inline: 0.8rem;
   padding-block: 0.3rem;
@@ -93,20 +103,18 @@
   cursor: pointer;
 }
 
-.workHistoryContainer {
-  display: flex;
-  gap: 1.4rem;
-  padding-top: 1.4rem;
-  width: 100%;
-  flex-wrap: wrap;
+.workHistoryCard {
+  background: #fafafa;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.5;
 }
 
-.workHistoryCard {
-  min-width: fit-content;
-  padding-inline: 2.5rem;
-  padding-block: 1rem;
-  border-radius: 10px;
-  box-shadow: 10px 10px 15px rgba(173, 173, 173);
+.workHistoryCard:hover {
+  background-color: #f0f4ff;
 }
 
 .profileContainer_details input {
@@ -116,6 +124,11 @@
   padding-block: 9px;
   width: fit-content;
 }
+.inputLabel {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  display: block;
+}
 
 .nameEdit {
   font-size: 1.5rem;
@@ -123,16 +136,19 @@
 }
 
 .updateProfileBtn {
-  padding-inline: 0.8rem;
-  padding-block: 0.3rem;
-  background: rgba(3, 93, 183, 0.905);
-  outline: none;
-  border: none;
-  color: white;
-  border-radius: 10px;
+  margin-top: 2rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #2563eb;
+  color: #fff;
+  border-radius: 0.5rem;
+  text-align: center;
   cursor: pointer;
-  width: fit-content;
-  margin-bottom: 6rem;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.updateProfileBtn:hover {
+  background-color: #1e40af;
 }
 
 .profileContainer_details textarea {
@@ -144,48 +160,49 @@
   font-size: 1.1rem;
 }
 
-.addWorkButton {
-  padding-inline: 1.3rem;
-  background: white;
-  border: 1px dotted grey;
-  border-radius: 10px;
-  padding-block: 1.2rem;
-  cursor: pointer;
-}
-
 .commentsContainer {
   position: fixed;
-  height: 100vh;
-  width: 100vw;
   top: 0;
   left: 0;
-  z-index: 5;
-  background: rgb(0, 0, 0, 0.7);
-  overflow: hidden;
-  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
+  justify-content: center;
   align-items: center;
+  z-index: 999;
 }
 
 .allCommentsContainer {
-  width: 40vw;
-  height: fit-content;
-  background: white;
-  border-radius: 10px;
-  position: relative;
-  padding: 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 400px;
+  width: 90%;
+
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.bioTextarea {
+  width: 100%;
+  min-height: 80px;
+  resize: none; /* disables manual resizing */
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: #fff;
+  box-sizing: border-box;
 }
 
 .inputField {
-  padding-inline: 1.3rem;
-  padding-block: 0.8rem;
-  outline: none;
-  border-radius: 10px;
-  border: 1px solid silver;
   width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
 }
 
 .current_post input {
@@ -196,26 +213,40 @@
   width: fit-content;
 }
 
+.editButton {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin-right: 5px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
 .currentPostEdit {
   font-size: 1rem;
 }
 
+.workHistoryContainer,
 .addEducationContainer {
   display: flex;
-  gap: 1.4rem;
-  padding-top: 1.4rem;
-  width: 100%;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
+  flex-direction: column;
+  gap: 1rem;
 }
 
+.addWorkButton,
 .addEducationButton {
-  padding-inline: 1.3rem;
-  background: white;
-  border: 1px dotted grey;
-  border-radius: 10px;
-  padding-block: 1.2rem;
+  color: #2563eb;
+  background: transparent;
+  border: none;
+  font-weight: 500;
   cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.addWorkButton:hover,
+.addEducationButton:hover {
+  text-decoration: underline;
 }
 
 .profileContainer__flex {

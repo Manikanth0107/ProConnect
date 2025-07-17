@@ -10,6 +10,9 @@ export const activeCheck = async (req, res) => {
 };
 
 export const createPost = async (req, res) => {
+  console.log("Incoming File:", req.file);
+  console.log("Incoming Body:", req.body);
+
   const { token } = req.body;
 
   try {
@@ -22,14 +25,24 @@ export const createPost = async (req, res) => {
     const post = new Post({
       userId: user._id,
       body: req.body.body,
-      media: req.file != undefined ? req.file.filename : "",
+      media: req.file != undefined ? req.file.path : "",
       fileType: req.file != undefined ? req.file.mimetype.split("/")[1] : "",
     });
 
     await post.save();
 
-    return res.status(200).json({ message: "Post created successfully" });
+    return res.status(200).json({
+      message: "Post created successfully",
+      post: {
+        id: post._id,
+        body: post.body,
+        media: post.media,
+        fileType: post.fileType,
+        createdAt: post.createdAt,
+      },
+    });
   } catch (error) {
+    console.error("❌ Error in createPost:", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -150,20 +163,32 @@ export const delete_comment_of_user = async (req, res) => {
 };
 
 export const increment_likes = async (req, res) => {
-  const { post_id } = req.body;
+  const { post_id, token } = req.body;
 
   try {
+    const user = await User.findOne({ token }).select("_id");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     const post = await Post.findOne({ _id: post_id });
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    post.likes = post.likes + 1;
+    const alreadyLiked = post.likedBy.includes(user._id);
+
+    if (alreadyLiked) {
+      return res.status(400).json({ message: "You already liked this post" });
+    }
+
+    post.likes += 1;
+    post.likedBy.push(user._id);
 
     await post.save();
 
-    return res.json({ message: "likes Incremented" });
+    return res.json({ message: "Post liked successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

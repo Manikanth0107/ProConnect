@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -33,9 +35,7 @@ app.use(postRoutes);
 app.use(express.static("uploads"));
 
 const start = async () => {
-  const connectDB = await mongoose.connect(
-    "mongodb+srv://linkmani:linkedMani0107@profconnections.svwrs.mongodb.net/?retryWrites=true&w=majority&appName=profconnections"
-  );
+  const connectDB = await mongoose.connect(process.env.MONGO_URL);
 
   app.listen(9090, () => {
     console.log("listening on port 9090");

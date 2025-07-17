@@ -1,6 +1,6 @@
 import { BASE_URL, clientServer } from "@/config";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Dashboard from "../dashboard";
 import UserLayout from "@/layout/userLayout";
 import Dashboardlayout from "@/layout/dashboardLayout";
@@ -13,21 +13,18 @@ import {
   sendConnectionRequest,
 } from "@/config/redux/action/authAction";
 import { useRouter } from "next/router";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function ViewProfilePage({ userProfile }) {
-  const searchParams = useSearchParams();
-
   const router = useRouter();
   const postReducer = useSelector((state) => state.postReducer);
   const dispatch = useDispatch();
-
   const authState = useSelector((state) => state.auth);
 
   const [userPosts, setUserPosts] = useState([]);
-
   const [isCurrentUserInConnection, setIsCurrentUserInConnection] =
     useState(false);
-
   const [isConnectionNull, setIsConnectionNull] = useState(true);
 
   const getUsersPost = async () => {
@@ -40,29 +37,24 @@ function ViewProfilePage({ userProfile }) {
     );
   };
 
-  // .connections;
-
   useEffect(() => {
-    let post = postReducer.posts.filter((post) => {
-      return post.userId.username === router.query.username;
-    });
+    const post = postReducer.posts.filter(
+      (post) => post.userId.username === router.query.username
+    );
     setUserPosts(post);
   }, [postReducer.posts]);
 
   useEffect(() => {
-    console.log(authState.connections, userProfile.userId._id);
-
     if (
       authState.connections.some(
         (user) => user.connectionId._id === userProfile.userId._id
       )
     ) {
       setIsCurrentUserInConnection(true);
-      if (
-        authState.connections.find(
-          (user) => user.connectionId._id === userProfile.userId._id
-        ).status_accepted === true
-      ) {
+      const found = authState.connections.find(
+        (user) => user.connectionId._id === userProfile.userId._id
+      );
+      if (found.status_accepted === true) {
         setIsConnectionNull(false);
       }
     }
@@ -73,11 +65,10 @@ function ViewProfilePage({ userProfile }) {
       )
     ) {
       setIsCurrentUserInConnection(true);
-      if (
-        authState.connectionRequest.find(
-          (user) => user.userId._id === userProfile.userId._id
-        ).status_accepted === true
-      ) {
+      const found = authState.connectionRequest.find(
+        (user) => user.userId._id === userProfile.userId._id
+      );
+      if (found.status_accepted === true) {
         setIsConnectionNull(false);
       }
     }
@@ -87,200 +78,146 @@ function ViewProfilePage({ userProfile }) {
     getUsersPost();
   }, []);
 
+  const handleConnect = async () => {
+    try {
+      await dispatch(
+        sendConnectionRequest({
+          token: localStorage.getItem("token"),
+          user_id: userProfile.userId._id,
+        })
+      );
+      toast.success(" Connection request sent!");
+      setIsCurrentUserInConnection(true); // Optional: update UI
+    } catch (error) {
+      toast.error(" Failed to send connection request.");
+    }
+  };
+
   return (
     <UserLayout>
       <Dashboardlayout>
+        <ToastContainer position="top-center" autoClose={3000} />
         <div className={styles.container}>
-          <div className={styles.backDropContainer}>
+          {/* Profile Header */}
+          <div className={styles.profileHeader}>
             <img
-              className={styles.backDrop}
-              src={`${BASE_URL}/${userProfile.userId.profilePicture}`}
+              className={styles.profilePicture}
+              src={userProfile.userId.profilePicture}
+              alt={`${userProfile.userId.name} profile`}
             />
-          </div>
-          <div className={styles.profileContainer_details}>
-            <div className={styles.profileContainer__flex}>
-              <div style={{ flex: "0.8" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    width: "fit-content",
-                    alignItems: "center",
-                    gap: "0.7rem",
+            <div className={styles.profileInfo}>
+              <h2>{userProfile.userId.name}</h2>
+              <p className={styles.username}>@{userProfile.userId.username}</p>
+              <p className={styles.bio}>{userProfile.bio}</p>
+
+              <div className={styles.actions}>
+                {isCurrentUserInConnection ? (
+                  <button className={styles.connectedButton}>
+                    {isConnectionNull ? "Pending" : "Connected"}
+                  </button>
+                ) : (
+                  <button onClick={handleConnect} className={styles.connectBtn}>
+                    Connect
+                  </button>
+                )}
+
+                <button
+                  className={styles.resumeBtn}
+                  onClick={async () => {
+                    const response = await clientServer.get(
+                      `/user/download_resume?id=${userProfile.userId._id}`
+                    );
+                    window.open(
+                      `${BASE_URL}/${response.data.message}`,
+                      "_blank"
+                    );
                   }}
                 >
-                  <h2>{userProfile.userId.name}</h2>
-                  <p style={{ color: "grey" }}>
-                    @{userProfile.userId.username}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 16.5l4.5-4.5h-3V3h-3v9H7.5L12 16.5zm6 2.25H6V18h12v.75z" />
+                  </svg>
+                  Resume
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <section className={styles.section}>
+            <h3>Recent Activity</h3>
+            {userPosts.length > 0 ? (
+              (() => {
+                const sortedPosts = [...userPosts].sort(
+                  (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+                );
+                const latestPost = sortedPosts[0];
+                return (
+                  <div className={styles.recentPost}>
+                    {latestPost.media && (
+                      <img src={latestPost.media} alt="Recent Post" />
+                    )}
+                    <p>{latestPost.body}</p>
+                  </div>
+                );
+              })()
+            ) : (
+              <p>No recent activity</p>
+            )}
+          </section>
+
+          {/* Current Post */}
+          <section className={styles.section}>
+            <h3>Current Position</h3>
+            <div className={styles.readOnlyInput}>
+              <span>{userProfile.currentPost}</span>
+            </div>
+          </section>
+
+          {/* Work History */}
+          <section className={styles.section}>
+            <h3>Work History</h3>
+            <div className={styles.cardList}>
+              {userProfile.pastWork.map((work, idx) => (
+                <div className={styles.card} key={idx}>
+                  <p>
+                    <strong>{work.company}</strong>
+                  </p>
+                  <p>
+                    <strong>Position:</strong> {work.position}
+                  </p>
+                  <p>
+                    <strong>Years:</strong> {work.years}
                   </p>
                 </div>
+              ))}
+            </div>
+          </section>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  {isCurrentUserInConnection ? (
-                    <button className={styles.connectedButton}>
-                      {isConnectionNull ? "Pending" : "Connected"}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        dispatch(
-                          sendConnectionRequest({
-                            token: localStorage.getItem("token"),
-                            user_id: userProfile.userId._id,
-                          })
-                        );
-                      }}
-                      className={styles.connectBtn}
-                    >
-                      Connect
-                    </button>
-                  )}
-                  <div
-                    style={{ cursor: "pointer" }}
-                    onClick={async () => {
-                      const response = await clientServer.get(
-                        `/user/download_resume?id=${userProfile.userId._id}`
-                      );
-                      window.open(
-                        `${BASE_URL}/${response.data.message}`,
-                        "_blank"
-                      );
-                    }}
-                  >
-                    <svg
-                      style={{ width: "1.2rem" }}
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                      />
-                    </svg>
-                  </div>
+          {/* Education */}
+          <section className={styles.section}>
+            <h3>Education</h3>
+            <div className={styles.cardList}>
+              {userProfile.education.map((edu, idx) => (
+                <div className={styles.card} key={idx}>
+                  <p>
+                    <strong>{edu.school}</strong>
+                  </p>
+                  <p>
+                    <strong>Degree:</strong> {edu.degree}
+                  </p>
+                  <p>
+                    <strong>Field of Study:</strong> {edu.fieldOfStudy}
+                  </p>
                 </div>
-
-                <div>
-                  <p>{userProfile.bio}</p>
-                </div>
-              </div>
-              <div style={{ flex: "0.2" }}>
-                <h3>Recent Activity</h3>
-                {userPosts.length > 0 ? (
-                  (() => {
-                    // Sort posts by createdAt (assuming posts have a createdAt timestamp)
-                    const sortedPosts = [...userPosts].sort(
-                      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-                    );
-
-                    // Get the most recent post
-                    const latestPost = sortedPosts[0];
-
-                    return (
-                      <div key={latestPost._id} className={styles.postCard}>
-                        <div className={styles.card}>
-                          <div className={styles.card_profileContainer}>
-                            {latestPost.media ? (
-                              <img
-                                src={`${BASE_URL}/${latestPost.media}`}
-                                alt="Recent Post"
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: "3.4rem",
-                                  height: "3.4rem",
-                                  background: "#f0f0f0",
-                                }}
-                              ></div>
-                            )}
-                          </div>
-                          <p>{latestPost.body}</p>
-                        </div>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <p>No recent activity</p>
-                )}
-              </div>
+              ))}
             </div>
-          </div>
-
-          <div className={styles.current_post}>
-            <h4>Current Post</h4>
-            <input
-              className={styles.currentPostEdit}
-              type="text"
-              value={userProfile.currentPost}
-            />
-          </div>
-
-          <div className="workHistory">
-            <h4>Work History</h4>
-            <div className={styles.workHistoryContainer}>
-              {userProfile.pastWork.map((work, index) => {
-                return (
-                  <div key={index} className={styles.workHistoryCard}>
-                    <p
-                      style={{
-                        fontWeight: "bold",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.8rem",
-                      }}
-                    >
-                      {work.company} - {work.position}
-                    </p>
-                    <p>{work.years}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="Education">
-            <h4>Education</h4>
-            <div className={styles.addEducationContainer}>
-              {userProfile.education.map((education, index) => {
-                return (
-                  <div key={index} className={styles.workHistoryCard}>
-                    <p
-                      style={{
-                        fontWeight: "bold",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.8rem",
-                      }}
-                    >
-                      School: {education.school}
-                    </p>
-                    <p
-                      style={{
-                        fontWeight: "bold",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.8rem",
-                      }}
-                    >
-                      Degree: {education.degree}
-                    </p>
-                    <p>{education.fieldOfStudy}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          </section>
         </div>
       </Dashboardlayout>
     </UserLayout>
@@ -290,17 +227,12 @@ function ViewProfilePage({ userProfile }) {
 export default ViewProfilePage;
 
 export async function getServerSideProps(context) {
-  console.log(context.query.username);
   const request = await clientServer.get(
     "/user/get_profile_based_on_username",
     {
-      params: {
-        username: context.query.username,
-      },
+      params: { username: context.query.username },
     }
   );
 
-  const response = await request.data;
-  console.log(response);
   return { props: { userProfile: request.data.profile } };
 }

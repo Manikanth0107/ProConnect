@@ -1,185 +1,104 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import styles from "./styles.module.css";
 import { useRouter } from "next/router";
 import { setTokenIsThere } from "@/config/redux/reducer/authReducer";
 import { useDispatch, useSelector } from "react-redux";
+import classNames from "classnames";
 
 function Dashboardlayout({ children }) {
   const router = useRouter();
-
   const dispatch = useDispatch();
-
   const authState = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (localStorage.getItem("token") === null) {
+    if (!localStorage.getItem("token")) {
       router.push("/login");
     }
     dispatch(setTokenIsThere());
   }, []);
+
+  const navLinks = [
+    { path: "/dashboard", label: "Scroll", icon: "🏠" },
+    { path: "/discover", label: "Discover", icon: "🔍" },
+    { path: "/my-connections", label: "My Connections", icon: "👥" },
+  ];
+
+  const isActive = useCallback(
+    (path) => router.pathname === path,
+    [router.pathname]
+  );
+
   return (
-    <div>
-      <div className="container">
-        <div className={styles.homeContainer}>
-          <div className={styles.homeContainer_leftBar}>
+    <div className={styles.dashboardLayout}>
+      <div className={styles.homeContainer}>
+        {/* Sidebar */}
+        <aside className={styles.sidebar}>
+          {navLinks.map((link) => (
             <div
-              onClick={() => {
-                router.push("/dashboard");
-              }}
-              className={styles.sideBarOption}
+              key={link.path}
+              onClick={() => router.push(link.path)}
+              className={classNames(styles.sideBarOption, {
+                [styles.active]: isActive(link.path),
+              })}
+              title={link.label}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                />
-              </svg>
-              <p>Scroll</p>
+              <span className={styles.sidebarIcon}>{link.icon}</span>
+              <p>{link.label}</p>
             </div>
+          ))}
+        </aside>
 
-            <div
-              onClick={() => {
-                router.push("/discover");
-              }}
-              className={styles.sideBarOption}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                />
-              </svg>
+        {/* Main Feed */}
+        <main className={styles.homeContainer_feedContainer}>{children}</main>
 
-              <p>Discover</p>
-            </div>
-
-            <div
-              onClick={() => {
-                router.push("/my-connections");
-              }}
-              className={styles.sideBarOption}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                />
-              </svg>
-
-              <p>My Connections </p>
-            </div>
-          </div>
-
-          <div className={styles.homeContainer_feedContainer}>{children}</div>
-
-          <div className={styles.homeContainer_extraContainer}>
-            <h3>Top Profiles</h3>
-
+        {/* Top Profiles Section */}
+        <aside className={styles.extraContainer}>
+          <h3>Top Profiles</h3>
+          <div className={styles.profileList}>
             {authState.all_profiles_fetched &&
               authState.all_users
                 .filter((profile) => profile.userId)
-                .map((profile) => {
-                  return (
-                    <div key={profile._id}>
-                      <p>{profile.userId.name}</p>
+                .slice(0, 8)
+                .map((profile) => (
+                  <div
+                    key={profile._id}
+                    className={styles.profileItem}
+                    title={profile.userId.username}
+                  >
+                    <div className={styles.avatarWrapper}>
+                      <img
+                        src={
+                          profile.userId.profilePicture ||
+                          "https://res.cloudinary.com/dvcjojcbu/image/upload/v1752600620/ProConnect/wxmb7ebsqn3eejzavlei.jpg"
+                        }
+                        alt={`${profile.userId.name}'s avatar`}
+                        className={styles.avatar}
+                      />
                     </div>
-                  );
-                })}
+                    <span>{profile.userId.name}</span>
+                  </div>
+                ))}
           </div>
-        </div>
+        </aside>
       </div>
 
-      <div className={styles.mobileNavBar}>
-        <div
-          onClick={() => {
-            router.push("/dashboard");
-          }}
-          className={styles.singleNavItemHolder_mobileView}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-6"
+      {/* Mobile Navigation */}
+      <nav className={styles.mobileNavBar}>
+        {navLinks.map((link) => (
+          <div
+            key={link.path}
+            onClick={() => router.push(link.path)}
+            className={classNames(styles.singleNavItemHolder_mobileView, {
+              [styles.active]: isActive(link.path),
+            })}
+            title={link.label}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-            />
-          </svg>
-        </div>
-
-        <div
-          onClick={() => {
-            router.push("/discover");
-          }}
-          className={styles.singleNavItemHolder_mobileView}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-            />
-          </svg>
-        </div>
-
-        <div
-          onClick={() => {
-            router.push("/my-connections");
-          }}
-          className={styles.singleNavItemHolder_mobileView}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-            />
-          </svg>
-        </div>
-      </div>
+            <span role="img" aria-label={link.label}>
+              {link.icon}
+            </span>
+          </div>
+        ))}
+      </nav>
     </div>
   );
 }

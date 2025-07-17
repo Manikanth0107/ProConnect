@@ -1,40 +1,110 @@
 import Profile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import crypto from "crypto";
-
 import bcrypt from "bcrypt";
+import axios from "axios";
+import stream from "stream";
+import { cloudinary } from "../cloudConfig.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import ConnectionRequest from "../models/connections.model.js";
 
 const convertUserDataToPDF = async (userData) => {
-  const doc = new PDFDocument();
-
+  const doc = new PDFDocument({ margin: 50 });
   const outputPath = crypto.randomBytes(32).toString("hex") + ".pdf";
-  const stream = fs.createWriteStream("uploads/" + outputPath);
+  const writeStream = fs.createWriteStream("uploads/" + outputPath);
+  doc.pipe(writeStream);
 
-  doc.pipe(stream);
+  try {
+    const response = await axios.get(userData.userId.profilePicture, {
+      responseType: "arraybuffer",
+    });
+    const imageBuffer = Buffer.from(response.data, "binary");
+    doc.image(imageBuffer, doc.page.width / 2 - 50, 20, {
+      width: 100,
+      height: 100,
+    });
+  } catch (err) {
+    console.warn("⚠️ Failed to load profile picture:", err.message);
+  }
 
-  doc.image(`uploads/${userData.userId.profilePicture}`, {
-    allign: "center",
-    width: 100,
-  });
-  doc.fontSize(14).text(`Name: ${userData.userId.name}`);
-  doc.fontSize(14).text(`Username: ${userData.userId.username}`);
-  doc.fontSize(14).text(`Email: ${userData.userId.email}`);
-  doc.fontSize(14).text(`Bio: ${userData.bio}`);
-  doc.fontSize(14).text(`Current Post: ${userData.currentPost}`);
+  doc.moveDown(6);
 
-  doc.fontSize(14).text("Past Work: ");
-  userData.pastWork.forEach((work, index) => {
-    doc.fontSize(14).text(`Company: ${work.company}`);
-    doc.fontSize(14).text(`Position: ${work.position}`);
-    doc.fontSize(14).text(`Years: ${work.years}`);
-  });
+  // Name and Meta
+  doc
+    .fontSize(20)
+    .fillColor("#2c3e50")
+    .text(userData.userId.name, { align: "center" });
+
+  doc
+    .fontSize(12)
+    .fillColor("gray")
+    .text(`@${userData.userId.username} | ${userData.userId.email}`, {
+      align: "center",
+    });
+
+  doc
+    .moveDown(1)
+    .strokeColor("#ccc")
+    .lineWidth(1)
+    .moveTo(50, doc.y)
+    .lineTo(doc.page.width - 50, doc.y)
+    .stroke();
+
+  doc.moveDown(2);
+
+  // Bio and Current Post
+  doc.fontSize(14).fillColor("#000").text("Bio", { underline: true });
+  doc
+    .fontSize(12)
+    .fillColor("#333")
+    .text(userData.bio || "N/A");
+
+  doc.moveDown();
+  doc.fontSize(14).fillColor("#000").text("Current Post", { underline: true });
+  doc
+    .fontSize(12)
+    .fillColor("#333")
+    .text(userData.currentPost || "N/A");
+
+  // Past Work
+  if (userData.pastWork?.length) {
+    doc.moveDown(2);
+    doc.fontSize(14).fillColor("#000").text("Past Work", { underline: true });
+
+    userData.pastWork.forEach((work) => {
+      doc.moveDown(0.5);
+      doc
+        .fontSize(12)
+        .fillColor("#444")
+        .text(`• Company: ${work.company}`)
+        .text(`  Position: ${work.position}`)
+        .text(`  Years: ${work.years}`);
+    });
+  }
+
+  // Education
+  if (userData.education?.length) {
+    doc.moveDown(2);
+    doc.fontSize(14).fillColor("#000").text("Education", { underline: true });
+
+    userData.education.forEach((edu) => {
+      doc.moveDown(0.5);
+      doc
+        .fontSize(12)
+        .fillColor("#444")
+        .text(`• School: ${edu.school}`)
+        .text(`  Degree: ${edu.degree}`)
+        .text(`  Field of Study: ${edu.fieldOfStudy}`);
+    });
+  }
 
   doc.end();
 
-  return outputPath;
+  return new Promise((resolve, reject) => {
+    writeStream.on("finish", () => resolve(outputPath));
+    writeStream.on("error", reject);
+  });
 };
 
 export const register = async (req, res) => {
@@ -116,7 +186,7 @@ export const uploadProfilePicture = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    user.profilePicture = req.file.filename;
+    user.profilePicture = req.file.path;
 
     await user.save();
 

@@ -1,81 +1,227 @@
 .container {
   display: flex;
   justify-content: center;
-  height: 90svh;
   align-items: center;
-  background: silver;
+  padding: 4rem 2rem;
+  background: #f9f9f9;
+  min-height: 100vh;
 }
 
 .cardContainer {
-  height: 80vh;
   display: flex;
-  border-radius: 10px;
+  flex-direction: row;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  width: 80vw;
-  border-radius: 10px;
-  background: white;
-  box-shadow: 10px 10px 15px rgb(173, 173, 173);
+  max-width: 900px;
+  width: 100%;
+  animation: fadeIn 0.4s ease;
 }
 
-.cardContainer_left {
-  flex: 0.6;
+.cardContainer_left,
+.cardContainer_right {
+  flex: 1;
   padding: 2rem;
-  text-align: center;
 }
 
 .cardleft_heading {
-  font-weight: bold;
   font-size: 1.8rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+  text-align: center;
 }
 
 .cardContainer_right {
-  flex: 0.4;
-  background: #00488b;
+  background: #f5f7fa;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
-  flex-direction: column;
   gap: 1.2rem;
-  padding-inline: 1.2rem;
 }
 
 .inputContainer {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding-top: 1.3rem;
-  max-width: 400px;
-  margin: 0 auto;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .inputRow {
-  width: fit-content;
   display: flex;
-  gap: 1.2rem;
+  gap: 1rem;
 }
 
 .inputField {
-  padding-inline: 1.3rem;
-  padding-block: 0.8rem;
-  outline: none;
-  border-radius: 10px;
-  border: 1px solid silver;
   width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border 0.2s ease;
+}
+
+.inputField:focus {
+  border-color: #0070f3;
+  outline: none;
 }
 
 .buttonWithOutline {
-  padding: 0.8rem 1.3rem;
-  background: rgb(220, 220, 220);
-  width: 100%;
+  background: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
   border-radius: 10px;
+  text-align: center;
   cursor: pointer;
+  transition: background 0.3s ease;
+  font-weight: 500;
+}
+
+.buttonWithOutline:hover {
+  background: #0055c0;
 }
 
 @media only screen and (max-width: 600px) {
   .cardContainer {
     flex-direction: column;
+  }
+}
+
+.fadeIn {
+  animation: fadeInSlide 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animate form on toggle */
+.fadeIn {
+  animation: fadeInSlide 0.4s ease-in-out;
+}
+
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+/* Show/Hide Password */
+.passwordWrapper {
+  position: relative;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.2rem;
+}
+
+/* Password Strength Indicator */
+.passwordWeak {
+  color: red;
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+}
+
+.passwordStrong {
+  color: green;
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* Eye Icon */
+.svgIcon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.svgIcon:hover {
+  color: #333;
+}
+
+/* Progress Bar */
+.strengthBarWrapper {
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.strengthBar {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  text-align: center;
+  color: #fff;
+  width: fit-content;
+  animation: slideIn 0.3s ease-in-out;
+}
+
+.weak {
+  background: #ff4444;
+}
+
+.strong {
+  background: #00c851;
+}
+
+@media screen and (max-width: 768px) {
+  .cardContainer {
+    flex-direction: column;
+  }
+
+  .inputRow {
+    flex-direction: column;
+  }
+
+  .cardContainer_right {
+    padding: 2rem 1.5rem;
+  }
+
+  .cardleft_heading {
+    font-size: 1.6rem;
   }
 }

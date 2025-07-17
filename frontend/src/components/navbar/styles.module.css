@@ -1,26 +1,116 @@
 .container {
-  padding: 1.2rem;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .navBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  max-width: 1300px;
+  margin: auto;
 }
 
-.buttonJoin {
-  width: fit-content;
+.logo {
+  font-size: 1.9rem;
+  font-weight: 700;
   cursor: pointer;
   user-select: none;
-  transition: all 0.2s;
-  margin-top: 0.8rem;
-  font-size: 1.4rem;
-  background: rgb(70, 190, 230);
-  padding-inline: 1.2rem;
-  padding-block: 0.6rem;
-  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.logo:hover {
+  transform: scale(1.03);
+}
+
+.logoMain {
+  color: #222;
+}
+
+.logoAccent {
+  color: #007bff;
 }
 
 .navBarOptionContainer {
   display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.navButton {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: #333;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navButton:hover {
+  background-color: #f1f1f1;
+  border-color: #999;
+}
+
+.logoutButton {
+  padding: 0.5rem 1.1rem;
+  background-color: #ff4d4d;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.logoutButton:hover {
+  background-color: #e23636;
+}
+
+.joinButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(0, 119, 255, 0.2);
+}
+
+.joinButton:hover {
+  background-color: #005edc;
+  transform: translateY(-1px);
+}
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  .navBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .navBarOptionContainer {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .joinButton,
+  .navButton,
+  .logoutButton {
+    font-size: 0.95rem;
+    padding: 0.45rem 1rem;
+  }
 }

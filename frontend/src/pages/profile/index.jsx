@@ -7,22 +7,34 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllPosts } from "@/config/redux/action/postAction";
 import { useRouter } from "next/router";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function ProfilePage() {
   const authState = useSelector((state) => state.auth);
   const postReducer = useSelector((state) => state.postReducer);
 
   const dispatch = useDispatch();
-
   const router = useRouter();
 
   const [userProfile, setUserProfile] = useState({});
-
   const [userPosts, setUserPosts] = useState([]);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const [isAddEducationOpen, setIsAddEducationOpen] = useState(false);
+
+  const [editWorkIndex, setEditWorkIndex] = useState(null); // null for add, index for edit
+  const [editWorkData, setEditWorkData] = useState({
+    company: "",
+    position: "",
+    years: "",
+  });
+
+  const [editEduIndex, setEditEduIndex] = useState(null);
+  const [editEduData, setEditEduData] = useState({
+    school: "",
+    degree: "",
+    fieldOfStudy: "",
+  });
 
   const [inputData, setInputData] = useState({
     company: "",
@@ -62,43 +74,59 @@ function ProfilePage() {
   }, [authState.user, postReducer.posts]);
 
   const updateProfilePicture = async (file) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("profile_picture", file);
     formData.append("token", localStorage.getItem("token"));
 
-    const response = await clientServer.post(
-      "/update_profile_picture",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    try {
+      const response = await clientServer.post(
+        "/update_profile_picture",
+        formData
+      );
+      if (response.status === 200) {
+        toast.success("Profile picture updated successfully!");
+        dispatch(getAboutUser({ token: localStorage.getItem("token") }));
       }
-    );
-
-    dispatch(getAboutUser({ token: localStorage.getItem("token") }));
+    } catch (err) {
+      toast.error("Something went wrong while updating the profile picture.");
+    }
   };
 
   const updateProfileData = async () => {
-    const request = await clientServer.post("/user_update", {
-      token: localStorage.getItem("token"),
-      name: userProfile.userId.name,
-    });
+    try {
+      await clientServer.post("/user_update", {
+        token: localStorage.getItem("token"),
+        name: userProfile.userId.name,
+      });
 
-    const response = await clientServer.post("/update_profile_data", {
-      token: localStorage.getItem("token"),
-      bio: userProfile.bio,
-      currentPost: userProfile.currentPost,
-      pastWork: userProfile.pastWork,
-      education: userProfile.education,
-    });
+      await clientServer.post("/update_profile_data", {
+        token: localStorage.getItem("token"),
+        bio: userProfile.bio,
+        currentPost: userProfile.currentPost,
+        pastWork: userProfile.pastWork,
+        education: userProfile.education,
+      });
 
-    dispatch(getAboutUser({ token: localStorage.getItem("token") }));
+      dispatch(getAboutUser({ token: localStorage.getItem("token") }));
+      toast.success("Profile updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update profile.");
+    }
   };
 
   return (
     <UserLayout>
       <Dashboardlayout>
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar
+        />
         {authState.user && userProfile.userId && (
           <div className={styles.container}>
             <div className={styles.backDropContainer}>
@@ -111,15 +139,19 @@ function ProfilePage() {
                 </label>
                 <input
                   onChange={(e) => {
-                    updateProfilePicture(e.target.files[0]);
+                    if (e.target.files && e.target.files.length > 0) {
+                      updateProfilePicture(e.target.files[0]);
+                    }
                   }}
                   hidden
                   type="file"
                   id="ProfilePictureUpload"
+                  accept="image/*"
                 />
-                <img src={`${BASE_URL}/${userProfile.userId.profilePicture}`} />
+                <img src={userProfile.userId.profilePicture} alt="Profile" />
               </div>
             </div>
+
             <div className={styles.profileContainer_details}>
               <div className={styles.profileContainer__flex}>
                 <div style={{ flex: "0.8" }}>
@@ -151,26 +183,24 @@ function ProfilePage() {
                   </div>
 
                   <div>
+                    <label className={styles.inputLabel}>Bio</label>
                     <textarea
+                      className={styles.bioTextarea}
                       value={userProfile.bio}
                       onChange={(e) => {
                         setUserProfile({ ...userProfile, bio: e.target.value });
                       }}
-                      rows={Math.max(3, Math.ceil(userProfile.bio.length / 80))}
-                      style={{ width: "100%" }}
                     />
                   </div>
                 </div>
+
                 <div style={{ flex: "0.2" }}>
                   <h3>Recent Activity</h3>
                   {userPosts.length > 0 ? (
                     (() => {
-                      // Sort posts by createdAt (assuming posts have a createdAt timestamp)
                       const sortedPosts = [...userPosts].sort(
                         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
                       );
-
-                      // Get the most recent post
                       const latestPost = sortedPosts[0];
 
                       return (
@@ -178,10 +208,7 @@ function ProfilePage() {
                           <div className={styles.card}>
                             <div className={styles.card_profileContainer}>
                               {latestPost.media ? (
-                                <img
-                                  src={`${BASE_URL}/${latestPost.media}`}
-                                  alt="Recent Post"
-                                />
+                                <img src={latestPost.media} alt="Recent Post" />
                               ) : (
                                 <div
                                   style={{
@@ -222,82 +249,212 @@ function ProfilePage() {
             <div className="workHistory">
               <h4>Work History</h4>
               <div className={styles.workHistoryContainer}>
-                {userProfile.pastWork.map((work, index) => {
-                  return (
-                    <div key={index} className={styles.workHistoryCard}>
-                      <p
-                        style={{
-                          fontWeight: "bold",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.8rem",
-                        }}
-                      >
-                        {work.company} - {work.position}
-                      </p>
-                      <p>{work.years}</p>
-                    </div>
-                  );
-                })}
+                {userProfile.pastWork.map((work, index) => (
+                  <div key={index} className={styles.workHistoryCard}>
+                    <p>
+                      <strong>{work.company}</strong>
+                    </p>
+                    <p>Position: {work.position}</p>
+                    <p>Years: {work.years}</p>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => {
+                        setEditWorkIndex(index);
+                        setEditWorkData(work);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => {
+                        const updatedWork = userProfile.pastWork.filter(
+                          (_, i) => i !== index
+                        );
+                        setUserProfile({
+                          ...userProfile,
+                          pastWork: updatedWork,
+                        });
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
 
                 <button
                   className={styles.addWorkButton}
-                  onClick={() => {
-                    setIsModalOpen(true);
-                  }}
+                  onClick={() => setIsModalOpen(true)}
                 >
-                  Add Work
+                  + Add another role
                 </button>
               </div>
             </div>
+
+            {editWorkIndex !== null && (
+              <div
+                onClick={() => setEditWorkIndex(null)}
+                className={styles.commentsContainer}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className={styles.allCommentsContainer}
+                >
+                  <input
+                    name="company"
+                    value={editWorkData.company}
+                    onChange={(e) =>
+                      setEditWorkData({
+                        ...editWorkData,
+                        company: e.target.value,
+                      })
+                    }
+                    className={styles.inputField}
+                    placeholder="Company"
+                  />
+                  <input
+                    name="position"
+                    value={editWorkData.position}
+                    onChange={(e) =>
+                      setEditWorkData({
+                        ...editWorkData,
+                        position: e.target.value,
+                      })
+                    }
+                    className={styles.inputField}
+                    placeholder="Position"
+                  />
+                  <input
+                    name="years"
+                    value={editWorkData.years}
+                    onChange={(e) =>
+                      setEditWorkData({
+                        ...editWorkData,
+                        years: e.target.value,
+                      })
+                    }
+                    className={styles.inputField}
+                    placeholder="Years"
+                  />
+
+                  <div
+                    onClick={() => {
+                      const updatedWork = [...userProfile.pastWork];
+                      updatedWork[editWorkIndex] = editWorkData;
+                      setUserProfile({ ...userProfile, pastWork: updatedWork });
+                      setEditWorkIndex(null);
+                    }}
+                    className={styles.updateProfileBtn}
+                  >
+                    Save Changes
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="education">
               <h4>Education</h4>
               <div className={styles.addEducationContainer}>
-                {userProfile.education.map((education, index) => {
-                  return (
-                    <div key={index} className={styles.workHistoryCard}>
-                      <p
-                        style={{
-                          fontWeight: "bold",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.8rem",
-                        }}
-                      >
-                        School: {education.school}
-                      </p>
-                      <p
-                        style={{
-                          fontWeight: "bold",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.8rem",
-                        }}
-                      >
-                        Degree: {education.degree}
-                      </p>
-                      <p>{education.fieldOfStudy}</p>
-                    </div>
-                  );
-                })}
+                {userProfile.education.map((education, index) => (
+                  <div key={index} className={styles.workHistoryCard}>
+                    <p>
+                      <strong>{education.school}</strong>
+                    </p>
+                    <p>Degree: {education.degree}</p>
+                    <p>Field of Study: {education.fieldOfStudy}</p>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => {
+                        setEditEduIndex(index);
+                        setEditEduData(education);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => {
+                        const updatedEdu = userProfile.education.filter(
+                          (_, i) => i !== index
+                        );
+                        setUserProfile({
+                          ...userProfile,
+                          education: updatedEdu,
+                        });
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
 
                 <button
                   className={styles.addEducationButton}
-                  onClick={() => {
-                    setIsAddEducationOpen(true);
-                  }}
+                  onClick={() => setIsAddEducationOpen(true)}
                 >
-                  Add Education
+                  + Add Education
                 </button>
               </div>
             </div>
 
-            {userProfile != authState.user && (
+            {editEduIndex !== null && (
               <div
-                onClick={() => {
-                  updateProfileData();
-                }}
+                onClick={() => setEditEduIndex(null)}
+                className={styles.commentsContainer}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className={styles.allCommentsContainer}
+                >
+                  <input
+                    name="school"
+                    value={editEduData.school}
+                    onChange={(e) =>
+                      setEditEduData({ ...editEduData, school: e.target.value })
+                    }
+                    className={styles.inputField}
+                    placeholder="School"
+                  />
+                  <input
+                    name="degree"
+                    value={editEduData.degree}
+                    onChange={(e) =>
+                      setEditEduData({ ...editEduData, degree: e.target.value })
+                    }
+                    className={styles.inputField}
+                    placeholder="Degree"
+                  />
+                  <input
+                    name="fieldOfStudy"
+                    value={editEduData.fieldOfStudy}
+                    onChange={(e) =>
+                      setEditEduData({
+                        ...editEduData,
+                        fieldOfStudy: e.target.value,
+                      })
+                    }
+                    className={styles.inputField}
+                    placeholder="Field Of Study"
+                  />
+
+                  <div
+                    onClick={() => {
+                      const updatedEdu = [...userProfile.education];
+                      updatedEdu[editEduIndex] = editEduData;
+                      setUserProfile({ ...userProfile, education: updatedEdu });
+                      setEditEduIndex(null);
+                    }}
+                    className={styles.updateProfileBtn}
+                  >
+                    Save Changes
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {userProfile !== authState.user && (
+              <div
+                onClick={updateProfileData}
                 className={styles.updateProfileBtn}
               >
                 Update Profile
@@ -308,9 +465,7 @@ function ProfilePage() {
 
         {isModalOpen && (
           <div
-            onClick={() => {
-              setIsModalOpen(false);
-            }}
+            onClick={() => setIsModalOpen(false)}
             className={styles.commentsContainer}
           >
             <div
@@ -357,9 +512,7 @@ function ProfilePage() {
 
         {isAddEducationOpen && (
           <div
-            onClick={() => {
-              setIsAddEducationOpen(false);
-            }}
+            onClick={() => setIsAddEducationOpen(false)}
             className={styles.commentsContainer}
           >
             <div
