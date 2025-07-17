@@ -290,7 +290,6 @@ function Dashboard() {
                 postState.comments.map((comment) => (
                   <div className={styles.singleComment} key={comment._id}>
                     <div className={styles.singleComment_profileContainer}>
-                    
                       <div>
                         <p
                           style={{

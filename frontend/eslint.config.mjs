@@ -9,6 +9,11 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
-const eslintConfig = [...compat.extends("next/core-web-vitals")];
-
-export default eslintConfig;
+export default [
+  {
+    languageOptions: {
+      parser: "espree", // ✅ Explicit JS parser for FlatConfig with Vercel compatibility
+    },
+  },
+  ...compat.extends("next/core-web-vitals"),
+];
