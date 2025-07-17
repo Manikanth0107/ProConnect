@@ -4,8 +4,8 @@ To access the application, please use the following credentials:
 ## Application URL
 (https://pro-connect-manikanths-projects-42fcedef.vercel.app/)
 
-- email: mani@gmail.com
-- password: mani123
+- email: demo@gmail.com
+- password: Demo@1
 
   ## Description
   Developed a social-media clone platforms using Next JS and  key concepts  like:
